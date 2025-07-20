@@ -238,6 +238,9 @@ function App() {
           )}
         </div>
       </div>
+      <footer className="footer">
+        Made with <span className="love-emoji">❤️</span> by <a href="https://www.linkedin.com/in/nilexrana/" target="_blank" rel="noopener noreferrer" className="footer-link">nileXrana</a>
+      </footer>
     </div>
   );
 }

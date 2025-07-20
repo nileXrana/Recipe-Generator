@@ -1,6 +1,6 @@
 # 🍽️ Recipe Generator
 
-Welcome to **Recipe Generator**! This project helps you generate delicious recipes using AI and a curated ingredient database. It features a modern frontend and a robust backend, making it easy to discover new meals and cooking ideas.
+Welcome to **Recipe Generator**! This project helps you generate delicious recipes using AI and a curated ingredient database. It features a modern frontend and a robust backend, making it easy to discover new meals and cooking ideas for you.
 
 ---
 

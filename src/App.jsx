@@ -125,7 +125,7 @@ function App() {
         <div className={"input-card input-card-hero" + cardTheme}>
           <h1 className={"input-title input-title-hero" + cardTheme}>Recipe Generator</h1>
           <p className={"app-explanation" + cardTheme}>
-            Welcome to Recipe Generator! Enter the ingredients you have, and instantly discover delicious recipes you can make. Save your favorite recipes, generate a smart grocery list, and plan your meals with ease. Enjoy a modern, premium cooking assistant designed to make your kitchen experience easier and more fun.
+            Welcome to Recipe Generator!Enter the ingredients you have, and instantly discover delicious recipes you can make.<br/>Save your favorite recipes, generate a smart grocery list, and plan your meals with ease.<br/>Enjoy a modern, premium cooking assistant designed to make your kitchen experience easier and more fun.
           </p>
           <input
             type="text"
@@ -139,41 +139,43 @@ function App() {
           </button>
           {error && <p className={"error-msg" + cardTheme}>{error}</p>}
         </div>
-        <div className={"suggestions-card" + cardTheme}>
-          <h3 className={"suggestions-title" + cardTheme}>Recipe Suggestions</h3>
-          {recipes.length === 0 ? (
-            <p className={"no-suggestions" + cardTheme}>No suggestions yet.</p>
-          ) : (
-            <ul className={"suggestions-list" + cardTheme}>
-              {recipes.map((r, i) => (
-                <li key={i} className={`suggestion-item${selected.includes(i) ? ' selected' : ''}${cardTheme}` }>
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(i)}
-                    onChange={() => handleSelect(i)}
-                  />
-                  <span>{r.title}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {recipes.length > 0 && (
-            <button onClick={handleGroceryList} className={"grocery-btn" + cardTheme} disabled={selected.length === 0 || groceryLoading}>
-              {groceryLoading ? 'Generating...' : 'Generate Grocery List'}
-            </button>
-          )}
-        </div>
-        <div className={"grocery-card" + cardTheme}>
-          <h3 className={"grocery-title" + cardTheme}>Grocery List</h3>
-          {groceryList.length === 0 ? (
-            <p className={"no-grocery" + cardTheme}>No grocery list yet.</p>
-          ) : (
-            <ul className={"grocery-list" + cardTheme}>
-              {groceryList.map((item, i) => (
-                <li key={i} className={"grocery-item" + cardTheme}>{item}</li>
-              ))}
-            </ul>
-          )}
+        <div className="side-by-side-container">
+          <div className={"suggestions-card suggestions-card-large" + cardTheme}>
+            <h3 className={"suggestions-title suggestions-title-large" + cardTheme}>Recipe Suggestions</h3>
+            {recipes.length === 0 ? (
+              <p className={"no-suggestions" + cardTheme}>No suggestions yet.</p>
+            ) : (
+              <ul className={"suggestions-list suggestions-list-large" + cardTheme}>
+                {recipes.map((r, i) => (
+                  <li key={i} className={`suggestion-item suggestion-item-large${selected.includes(i) ? ' selected' : ''}${cardTheme}` }>
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(i)}
+                      onChange={() => handleSelect(i)}
+                    />
+                    <span>{r.title}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {recipes.length > 0 && (
+              <button onClick={handleGroceryList} className={"grocery-btn grocery-btn-large" + cardTheme} disabled={selected.length === 0 || groceryLoading}>
+                {groceryLoading ? 'Generating...' : 'Generate Grocery List'}
+              </button>
+            )}
+          </div>
+          <div className={"grocery-card grocery-card-large" + cardTheme}>
+            <h3 className={"grocery-title grocery-title-large" + cardTheme}>Grocery List</h3>
+            {groceryList.length === 0 ? (
+              <p className={"no-grocery" + cardTheme}>No grocery list yet.</p>
+            ) : (
+              <ul className={"grocery-list grocery-list-large" + cardTheme}>
+                {groceryList.map((item, i) => (
+                  <li key={i} className={"grocery-item grocery-item-large" + cardTheme}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </div>

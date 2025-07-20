@@ -35,7 +35,7 @@ Recipe-Generator/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/Recipe-Generator.git
+git clone https://github.com/nileXrana/Recipe-Generator.git
 cd Recipe-Generator
 ```
 

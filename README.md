@@ -16,7 +16,7 @@ Welcome to **Recipe Generator**! This project helps you generate delicious recip
 ## 🛠️ Tech Stack
 - **Frontend:** React, Vite, Tailwind CSS
 - **Backend:** Node.js, Express, MongoDB
-- **AI Integration:** Gemini API
+- **AI Integration:** SPOONACULAR API
 
 ---
 
@@ -43,8 +43,8 @@ cd Recipe-Generator
 Create a `.env` file in the `backend/` directory:
 ```
 MONGO_URI=your_mongodb_connection_string
-GEMINI_API_KEY=your_gemini_api_key
-PORT=5000
+SPOONACULAR_API_KEY=your_spoonacular_api_key
+PORT=4000
 ```
 
 ### 3. Install Dependencies
@@ -85,10 +85,3 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 ## 📄 License
 [MIT](LICENSE)
-
----
-
-## 📬 Contact
-**Your Name**  
-[Email](mailto:your.email@example.com)  
-[GitHub](https://github.com/yourusername) 

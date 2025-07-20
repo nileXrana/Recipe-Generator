@@ -476,3 +476,11 @@ body.light, html.light, #root.light {
     padding: 2.2rem 0.5rem 1.5rem 0.5rem;
   }
 }
+
+.favorite-recipes-box {
+  text-align: left !important;
+}
+
+.save-btn {
+  cursor: pointer;
+}

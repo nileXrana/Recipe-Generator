@@ -48,6 +48,7 @@ function App() {
   const [selected, setSelected] = useState([]);
   const [groceryList, setGroceryList] = useState([]);
   const [groceryLoading, setGroceryLoading] = useState(false);
+  const [favorites, setFavorites] = useState([]);
   const mainRef = useRef(null);
 
   useEffect(() => {
@@ -58,6 +59,47 @@ function App() {
     }
   }, [dark]);
 
+  // Load favorites on mount
+  useEffect(() => {
+    fetchFavorites();
+  }, []);
+
+  const fetchFavorites = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/favorites');
+      const data = await res.json();
+      setFavorites(data.favorites || []);
+    } catch (err) {
+      // Optionally handle error
+    }
+  };
+
+  const handleSaveFavorite = async (recipe) => {
+    try {
+      const res = await fetch('http://localhost:4000/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recipe),
+      });
+      if (res.status === 201) {
+        fetchFavorites();
+      } else if (res.status === 409) {
+        alert('Recipe already in favorites.');
+      }
+    } catch (err) {
+      alert('Failed to save favorite.');
+    }
+  };
+
+  const handleRemoveFavorite = async (id) => {
+    try {
+      await fetch(`http://localhost:4000/api/favorites/${id}`, { method: 'DELETE' });
+      fetchFavorites();
+    } catch (err) {
+      alert('Failed to remove favorite.');
+    }
+  };
+
   const handleThemeToggle = () => setDark((d) => !d);
   const handleInputChange = (e) => setIngredients(e.target.value);
   const handleSuggest = async () => {
@@ -67,7 +109,8 @@ function App() {
     setSelected([]);
     setGroceryList([]);
     try {
-      const res = await fetch('http://localhost:5000/api/recipes/suggest', {
+      console.log(ingredients)
+      const res = await fetch('http://localhost:4000/api/recipes/suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ingredients }),
@@ -98,7 +141,7 @@ function App() {
     setGroceryList([]);
     try {
       const selectedRecipes = selected.map((i) => recipes[i]);
-      const res = await fetch('http://localhost:5000/api/grocery-list', {
+      const res = await fetch('http://localhost:4000/api/grocery-list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipes: selectedRecipes }),
@@ -154,14 +197,13 @@ function App() {
                       onChange={() => handleSelect(i)}
                     />
                     <span>{r.title}</span>
+                    {/* Save Favorite Button */}
+                    <button className="save-btn" style={{marginLeft: 8}} onClick={() => handleSaveFavorite({ title: r.title, recipeId: r.id || r.recipeId || i, image: r.image })}>
+                      Save
+                    </button>
                   </li>
                 ))}
               </ul>
-            )}
-            {recipes.length > 0 && (
-              <button onClick={handleGroceryList} className={"grocery-btn grocery-btn-large" + cardTheme} disabled={selected.length === 0 || groceryLoading}>
-                {groceryLoading ? 'Generating...' : 'Generate Grocery List'}
-              </button>
             )}
           </div>
           <div className={"grocery-card grocery-card-large" + cardTheme}>
@@ -176,6 +218,24 @@ function App() {
               </ul>
             )}
           </div>
+        </div>
+        {/* Favorites Section moved below both cards */}
+        <div className={"input-card input-card-hero favorite-recipes-box" + cardTheme} style={{marginTop: 24}}>
+          <h3 className={"suggestions-title suggestions-title-large" + cardTheme}>Favorite Recipes</h3>
+          {favorites.length === 0 ? (
+            <p className={"no-suggestions" + cardTheme}>No favorites yet.</p>
+          ) : (
+            <ul className={"suggestions-list suggestions-list-large" + cardTheme}>
+              {favorites.map((fav) => (
+                <li key={fav._id} className={"suggestion-item suggestion-item-large" + cardTheme}>
+                  <span>{fav.title}</span>
+                  <button className="save-btn" style={{marginLeft: 8}} onClick={() => handleRemoveFavorite(fav._id)}>
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>

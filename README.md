@@ -74,7 +74,7 @@ npm run dev
 ---
 
 ## 📸 Screenshots
-> _Add screenshots or GIFs here to showcase your app!_
+> <img width="1280" height="710" alt="Screenshot 2025-07-20 at 9 28 37 PM" src="https://github.com/user-attachments/assets/9b7036c4-0817-4776-8e08-48ed5c3fc082" />
 
 ---
 

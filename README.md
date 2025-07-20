@@ -85,10 +85,3 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 ## 📄 License
 [MIT](LICENSE)
-
----
-
-## 📬 Contact
-**Your Name**  
-[Email](mailto:your.email@example.com)  
-[GitHub](https://github.com/yourusername) 

@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
 const Favorite = require('./Favorite');
+const User = require('./User');
 
 dotenv.config();
 
@@ -11,11 +13,109 @@ const app = express();
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+// Middleware to verify JWT token
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ message: 'Access token required' });
+  }
+  
+  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-app.post('/api/recipes/suggest', async (req, res) => {
+// AUTH ROUTES
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email' });
+    }
+    
+    // Create new user
+    const user = new User({ name, email, password });
+    await user.save();
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+    
+    res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Failed to register user' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    
+    // Check password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+    
+    res.json({
+      message: 'Login successful',
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Failed to login' });
+  }
+});
+
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch user data' });
+  }
+});
+
+// RECIPE ROUTES
+app.post('/api/recipes/suggest', authenticateToken, async (req, res) => {
   const { ingredients } = req.body;
   try {
     // Call Spoonacular API
@@ -34,38 +134,93 @@ app.post('/api/recipes/suggest', async (req, res) => {
   }
 });
 
-app.post('/api/grocery-list', (req, res) => {
+app.post('/api/grocery-list', authenticateToken, async (req, res) => {
   const { recipes } = req.body;
-  const groceryList = [
-    '1x Onion',
-    '2x Tomato',
-    '1x Garlic',
-    '500g Chicken',
-    'Olive Oil',
-    'Salt',
-    'Pepper',
-  ];
-  res.json({ groceryList });
+  
+  if (!recipes || recipes.length === 0) {
+    return res.json({ groceryList: [] });
+  }
+
+  try {
+    // Extract recipe IDs
+    const recipeIds = recipes.map(r => r.id || r.recipeId).filter(id => id);
+    
+    if (recipeIds.length === 0) {
+      return res.json({ groceryList: ['No valid recipe IDs provided'] });
+    }
+
+    // Fetch ingredients for each recipe from Spoonacular
+    const ingredientPromises = recipeIds.map(async (id) => {
+      try {
+        const response = await axios.get(`https://api.spoonacular.com/recipes/${id}/information`, {
+          params: {
+            apiKey: process.env.SPOONACULAR_API_KEY,
+            includeNutrition: false,
+          },
+        });
+        return response.data.extendedIngredients || [];
+      } catch (error) {
+        console.error(`Failed to fetch ingredients for recipe ${id}:`, error.message);
+        return [];
+      }
+    });
+
+    const allIngredients = await Promise.all(ingredientPromises);
+    
+    // Flatten and combine ingredients
+    const ingredientMap = {};
+    allIngredients.flat().forEach(ing => {
+      const name = ing.name || ing.original;
+      if (name) {
+        if (ingredientMap[name]) {
+          // Combine quantities if same ingredient
+          ingredientMap[name].amount += ing.amount || 0;
+        } else {
+          ingredientMap[name] = {
+            amount: ing.amount || 0,
+            unit: ing.unit || '',
+            original: ing.original || name
+          };
+        }
+      }
+    });
+
+    // Format grocery list
+    const groceryList = Object.values(ingredientMap).map(ing => {
+      // Just return the original string which already has amount and unit formatted nicely
+      return ing.original;
+    });
+
+    res.json({ groceryList: groceryList.length > 0 ? groceryList : ['No ingredients found'] });
+  } catch (error) {
+    console.error('Grocery list error:', error.message);
+    res.status(500).json({ groceryList: ['Failed to generate grocery list'] });
+  }
 });
 
 app.get('/', (req, res) => {
   res.send('Recipe Generator Backend Running');
 });
 
-// Get all favorites
-app.get('/api/favorites', async (req, res) => {
+// FAVORITES ROUTES (User-specific)
+app.get('/api/favorites', authenticateToken, async (req, res) => {
   try {
-    const favorites = await Favorite.find();
+    const favorites = await Favorite.find({ userId: req.user.userId }).sort({ createdAt: -1 });
     res.json({ favorites });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch favorites.' });
   }
 });
-// Add a favorite
-app.post('/api/favorites', async (req, res) => {
+
+app.post('/api/favorites', authenticateToken, async (req, res) => {
   const { title, recipeId, image } = req.body;
   try {
-    const favorite = new Favorite({ title, recipeId, image });
+    const favorite = new Favorite({ 
+      userId: req.user.userId,
+      title, 
+      recipeId, 
+      image 
+    });
     await favorite.save();
     res.status(201).json({ favorite });
   } catch (error) {
@@ -76,10 +231,13 @@ app.post('/api/favorites', async (req, res) => {
     }
   }
 });
-// Remove a favorite
-app.delete('/api/favorites/:id', async (req, res) => {
+
+app.delete('/api/favorites/:id', authenticateToken, async (req, res) => {
   try {
-    await Favorite.findByIdAndDelete(req.params.id);
+    await Favorite.findOneAndDelete({ 
+      _id: req.params.id, 
+      userId: req.user.userId 
+    });
     res.json({ message: 'Favorite removed.' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to remove favorite.' });

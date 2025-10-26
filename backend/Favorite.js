@@ -5,6 +5,11 @@ const favoriteSchema = new mongoose.Schema({
   title: { type: String, required: true },
   recipeId: { type: String, required: true },
   image: { type: String },
+  servings: { type: String },
+  prepTime: { type: String },
+  ingredients: [{ type: String }],
+  instructions: [{ type: String }],
+  tips: [{ type: String }],
   createdAt: { type: Date, default: Date.now },
 });
 

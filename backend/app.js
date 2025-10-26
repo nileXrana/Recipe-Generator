@@ -198,6 +198,79 @@ app.post('/api/grocery-list', authenticateToken, async (req, res) => {
   }
 });
 
+// DETAILED RECIPE ENDPOINT
+app.post('/api/detailed-recipe', authenticateToken, async (req, res) => {
+  const { recipes } = req.body;
+  
+  if (!recipes || recipes.length === 0) {
+    return res.json({ detailedRecipe: null });
+  }
+
+  try {
+    // Use the first selected recipe for detailed instructions
+    const recipeId = recipes[0].id || recipes[0].recipeId;
+    
+    if (!recipeId) {
+      return res.status(400).json({ message: 'No valid recipe ID provided' });
+    }
+
+    // Fetch detailed recipe information from Spoonacular
+    const response = await axios.get(`https://api.spoonacular.com/recipes/${recipeId}/information`, {
+      params: {
+        apiKey: process.env.SPOONACULAR_API_KEY,
+        includeNutrition: false,
+      },
+    });
+
+    const recipe = response.data;
+
+    // Parse instructions
+    let instructions = [];
+    if (recipe.analyzedInstructions && recipe.analyzedInstructions.length > 0) {
+      instructions = recipe.analyzedInstructions[0].steps.map(step => step.step);
+    } else if (recipe.instructions) {
+      // Fallback: parse HTML or plain text instructions
+      const cleanInstructions = recipe.instructions
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .split(/\d+\.\s+/) // Split by numbered steps
+        .filter(step => step.trim().length > 0);
+      instructions = cleanInstructions;
+    }
+
+    // Format ingredients
+    const ingredients = recipe.extendedIngredients.map(ing => ing.original);
+
+    // Create detailed recipe object
+    const detailedRecipe = {
+      title: recipe.title,
+      servings: recipe.servings,
+      prepTime: recipe.readyInMinutes ? `${recipe.readyInMinutes} minutes` : 'N/A',
+      ingredients: ingredients,
+      instructions: instructions.length > 0 ? instructions : ['No step-by-step instructions available for this recipe.'],
+      tips: [
+        'Read through all the steps before starting.',
+        'Prep all ingredients before you begin cooking.',
+        'Keep your workspace clean and organized.',
+        'Taste as you go and adjust seasonings to your preference.'
+      ]
+    };
+
+    res.json({ detailedRecipe });
+  } catch (error) {
+    console.error('Detailed recipe error:', error.message);
+    console.error('Error details:', error.response ? error.response.data : error);
+    
+    if (error.response && error.response.status === 402) {
+      return res.status(402).json({ message: 'Spoonacular API quota exceeded. Please try again later.' });
+    }
+    
+    res.status(500).json({ 
+      message: 'Failed to generate detailed recipe', 
+      error: error.message 
+    });
+  }
+});
+
 app.get('/', (req, res) => {
   res.send('Recipe Generator Backend Running');
 });
@@ -213,13 +286,18 @@ app.get('/api/favorites', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/favorites', authenticateToken, async (req, res) => {
-  const { title, recipeId, image } = req.body;
+  const { title, recipeId, image, servings, prepTime, ingredients, instructions, tips } = req.body;
   try {
     const favorite = new Favorite({ 
       userId: req.user.userId,
       title, 
       recipeId, 
-      image 
+      image,
+      servings,
+      prepTime,
+      ingredients: ingredients || [],
+      instructions: instructions || [],
+      tips: tips || []
     });
     await favorite.save();
     res.status(201).json({ favorite });

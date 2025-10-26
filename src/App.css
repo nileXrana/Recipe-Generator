@@ -1,4 +1,6 @@
-body, html, #root, .plain-bg, .plain-dark-bg {
+@import "tailwindcss";
+
+/* body, html, #root, .plain-bg, .plain-dark-bg {
   min-height: 100vh;
   margin: 0;
   padding: 0;
@@ -520,4 +522,77 @@ body.light, html.light, #root.light {
   20% { transform: scale(0.95); }
   40% { transform: scale(1.1); }
   50% { transform: scale(1); }
+} */
+
+/* Auth Modal Styles */
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.auth-modal-content {
+  position: relative;
+  max-width: 500px;
+  width: 90%;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #667eea;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.auth-modal-close:hover {
+  background: #667eea;
+  color: white;
+  transform: rotate(90deg);
+}
+
+/* Auth Container inside Modal */
+.auth-modal-content .auth-container {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.auth-modal-content .auth-container::before {
+  display: none;
 }

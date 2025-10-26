@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Register from './components/Register';
 import RecipeDashboard from './components/RecipeDashboard';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [showLogin, setShowLogin] = useState(true);
+  const [currentPage, setCurrentPage] = useState('dashboard'); // 'dashboard', 'login', 'register'
 
   useEffect(() => {
     // Check if user is already logged in
@@ -23,11 +25,29 @@ function App() {
   const handleLogin = (userData, userToken) => {
     setUser(userData);
     setToken(userToken);
+    setCurrentPage('dashboard');
+    toast.success('Login successful! Welcome back!', {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
   };
 
   const handleRegister = (userData, userToken) => {
     setUser(userData);
     setToken(userToken);
+    setCurrentPage('dashboard');
+    toast.success('Account created successfully! Welcome!', {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
   };
 
   const handleLogout = () => {
@@ -35,19 +55,72 @@ function App() {
     localStorage.removeItem('user');
     setUser(null);
     setToken(null);
+    toast.info('You are signed out!', {
+      position: "top-right",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+    // Refresh the page after showing toast
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
   };
 
-  // Show dashboard if user is logged in
-  if (user && token) {
-    return <RecipeDashboard user={user} token={token} onLogout={handleLogout} />;
+  const handleShowLogin = () => {
+    setCurrentPage('login');
+  };
+
+  const handleShowRegister = () => {
+    setCurrentPage('register');
+  };
+
+  const handleBackToDashboard = () => {
+    setCurrentPage('dashboard');
+  };
+
+  // Render the current page
+  if (currentPage === 'login') {
+    return (
+      <>
+        <Login 
+          onLogin={handleLogin} 
+          onSwitchToRegister={handleShowRegister}
+          onBackToDashboard={handleBackToDashboard}
+        />
+        <ToastContainer />
+      </>
+    );
   }
 
-  // Show login or register
-  if (showLogin) {
-    return <Login onLogin={handleLogin} onSwitchToRegister={() => setShowLogin(false)} />;
-  } else {
-    return <Register onRegister={handleRegister} onSwitchToLogin={() => setShowLogin(true)} />;
+  if (currentPage === 'register') {
+    return (
+      <>
+        <Register 
+          onRegister={handleRegister} 
+          onSwitchToLogin={handleShowLogin}
+          onBackToDashboard={handleBackToDashboard}
+        />
+        <ToastContainer />
+      </>
+    );
   }
+
+  return (
+    <>
+      <RecipeDashboard 
+        user={user} 
+        token={token} 
+        onLogout={handleLogout}
+        onShowLogin={handleShowLogin}
+        onShowRegister={handleShowRegister}
+      />
+      <ToastContainer />
+    </>
+  );
 }
 
-export default App; 
+export default App;
+ 

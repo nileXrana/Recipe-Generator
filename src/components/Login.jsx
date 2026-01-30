@@ -137,7 +137,7 @@ function Login({ onLogin, onSwitchToRegister, onBackToDashboard }) {
               className="text-purple-400 font-semibold hover:text-indigo-400 hover:underline transition-colors"
               onClick={onSwitchToRegister}
             >
-              Sign up
+              Sign up Now
             </button>
           </p>
         </div>

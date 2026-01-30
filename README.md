@@ -4,7 +4,7 @@ Welcome to **Recipe Generator**! This project helps you generate delicious recip
 
 ---
 
-## 🚀 Features
+## Features
 - Generate unique recipes with AI
 - Search and filter by ingredients
 - Save your favorite recipes
